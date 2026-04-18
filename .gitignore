@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+.env/
+
+# PyCharm
+.idea/
+
+# Data
+data/
+*.csv
+
+# Images
+*.jpg
+*.png
+
+# Models
+outputs/models/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
