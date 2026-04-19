@@ -5,15 +5,13 @@ __pycache__/
 *.pyd
 
 # Virtual env
-venv/
-.env/
+.venv/
 
 # PyCharm
 .idea/
 
 # Data
 data/
-*.csv
 
 # Images
 *.jpg
