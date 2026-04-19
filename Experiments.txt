@@ -1,0 +1,19 @@
+experiment_name-et: "text_distilbert_lr1e5_len64_ep3"
+lr: 1e-5
+max_length: 64
+epochs: 3
+
+experiment_name-et: "text_distilbert_lr2e5_len64_ep3"
+lr: 2e-5
+max_length: 64
+epochs: 3
+
+experiment_name-et: "text_distilbert_lr2e5_len128_ep3"
+lr: 2e-5
+max_length: 128
+epochs: 3
+
+experiment_name-et: "text_distilbert_lr2e5_len128_ep5"
+lr: 2e-5
+max_length: 128
+epochs: 5
