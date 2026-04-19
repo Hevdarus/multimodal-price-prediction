@@ -52,6 +52,8 @@ UNIT_ALIASES = {
     "piece": "pcs",
     "pack": "pack",
     "packs": "pack",
+    "none" : "none",
+    "nan" : "none"
 }
 
 
