@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +14,7 @@ from tqdm import tqdm
 
 from src.models.text_dataset import TextDataset
 from src.models.text_model import TextRegressionModel
+from src.utils.experiment_config import get_experiment_config
 
 
 def train_epoch(model, loader, optimizer, device):
@@ -27,7 +29,7 @@ def train_epoch(model, loader, optimizer, device):
         optimizer.zero_grad()
 
         outputs = model(input_ids, attention_mask)
-        loss = torch.nn.functional.mse_loss(outputs, targets)
+        loss = F.mse_loss(outputs, targets)
 
         loss.backward()
         optimizer.step()
@@ -90,16 +92,53 @@ def evaluate_epoch(model, loader, device):
 
     return metrics, predictions_df
 
+
 def save_checkpoint(model, output_path: str | Path):
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), output_path)
 
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config_path",
+        type=str,
+        default="Experiments.txt",
+        help="Path to the experiment config txt file.",
+    )
+    parser.add_argument(
+        "--experiment_name",
+        type=str,
+        required=True,
+        help="Experiment name to run from the config file.",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parse_args()
+
+    config = get_experiment_config(
+        config_path=args.config_path,
+        experiment_name=args.experiment_name,
+    )
+
+    experiment_name = config["experiment_name"]
+    lr = config["lr"]
+    max_length = config["max_length"]
+    num_epochs = config["epochs"]
+
+    print("\nLoaded experiment config:")
+    print(f"experiment_name = {experiment_name}")
+    print(f"lr              = {lr}")
+    print(f"max_length      = {max_length}")
+    print(f"epochs          = {num_epochs}")
+
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    print(f"Device: {device}")
+    print(f"\nDevice: {device}")
     if use_cuda:
         print(f"GPU: {torch.cuda.get_device_name(0)}")
     else:
@@ -108,12 +147,12 @@ if __name__ == "__main__":
     train_df = pd.read_csv("data/processed/train_split.csv")
     val_df = pd.read_csv("data/processed/val_split.csv")
 
-    train_dataset = TextDataset(train_df, max_length=128)
-    val_dataset = TextDataset(val_df, max_length=128)
+    train_dataset = TextDataset(train_df, max_length=max_length)
+    val_dataset = TextDataset(val_df, max_length=max_length)
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=64,
+        batch_size=32,
         shuffle=True,
         num_workers=4,
         pin_memory=use_cuda,
@@ -121,18 +160,24 @@ if __name__ == "__main__":
 
     val_loader = DataLoader(
         val_dataset,
-        batch_size=64,
+        batch_size=32,
         shuffle=False,
         num_workers=4,
         pin_memory=use_cuda,
     )
 
     model = TextRegressionModel().to(device)
-    optimizer = AdamW(model.parameters(), lr=2e-5)
+    optimizer = AdamW(model.parameters(), lr=lr)
 
-    num_epochs = 3
     best_val_loss = float("inf")
     history = []
+
+    output_dir = Path("outputs/models")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    best_model_path = output_dir / f"{experiment_name}.pt"
+    val_pred_path = output_dir / f"{experiment_name}_val_predictions.csv"
+    history_path = output_dir / f"{experiment_name}_history.csv"
 
     for epoch in range(num_epochs):
         print(f"\nEpoch {epoch + 1}/{num_epochs}")
@@ -149,7 +194,10 @@ if __name__ == "__main__":
 
         history.append(
             {
+                "experiment_name": experiment_name,
                 "epoch": epoch + 1,
+                "lr": lr,
+                "max_length": max_length,
                 "train_loss_log_mse": train_loss,
                 "val_loss_log_mse": val_metrics["val_loss_log_mse"],
                 "val_mae_price": val_metrics["val_mae_price"],
@@ -160,17 +208,15 @@ if __name__ == "__main__":
         # Legjobb modell mentése
         if current_val_loss < best_val_loss:
             best_val_loss = current_val_loss
-
-            save_checkpoint(model, "outputs/models/text_model_best.pt")
-            val_predictions.to_csv("outputs/models/text_val_predictions.csv", index=False)
-
+            save_checkpoint(model, best_model_path)
+            val_predictions.to_csv(val_pred_path, index=False)
             print("Best model updated and saved.")
 
     history_df = pd.DataFrame(history)
-    history_df.to_csv("outputs/models/text_training_history.csv", index=False)
+    history_df.to_csv(history_path, index=False)
 
     print("\nTraining finished.")
     print("Saved files:")
-    print("- outputs/models/text_model_best.pt")
-    print("- outputs/models/text_val_predictions.csv")
-    print("- outputs/models/text_training_history.csv")
+    print(f"- {best_model_path}")
+    print(f"- {val_pred_path}")
+    print(f"- {history_path}")
