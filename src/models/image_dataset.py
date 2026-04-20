@@ -12,8 +12,19 @@ from torchvision import transforms
 def get_train_transform(image_size: int = 224):
     return transforms.Compose(
         [
-            transforms.Resize((image_size, image_size)),
+            transforms.RandomResizedCrop(
+                size=image_size,
+                scale=(0.8, 1.0),
+                ratio=(0.9, 1.1),
+            ),
             transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomRotation(degrees=10),
+            transforms.ColorJitter(
+                brightness=0.2,
+                contrast=0.2,
+                saturation=0.2,
+                hue=0.02,
+            ),
             transforms.ToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
