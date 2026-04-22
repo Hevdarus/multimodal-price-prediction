@@ -85,15 +85,13 @@ if __name__ == "__main__":
 
     df = ensure_price_bins(df, target_col="price", n_bins=10)
 
-    # 1) First split: train vs temp (70 / 30)
     train_df, temp_df = train_test_split(
         df,
-        test_size=0.30,
+        test_size=0.40,
         random_state=42,
         stratify=df["price_bin"],
     )
 
-    # 2) Second split: temp -> val/test (15 / 15 overall)
     val_df, test_df = train_test_split(
         temp_df,
         test_size=0.50,
