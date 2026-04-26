@@ -150,7 +150,7 @@ if __name__ == "__main__":
     model = ImageRegressionModel(pretrained=True).to(device)
     optimizer = AdamW(model.parameters(), lr=args.lr)
 
-    output_dir = Path("outputs/models")
+    output_dir = Path("outputs/models/image")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     best_model_path = output_dir / f"{args.experiment_name}.pt"

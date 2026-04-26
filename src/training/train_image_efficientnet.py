@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     optimizer = AdamW(model.parameters(), lr=args.lr)
 
-    output_dir = Path("outputs/models")
+    output_dir = Path("outputs/models/image")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     best_model_path = output_dir / f"{args.experiment_name}.pt"
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     history_path = output_dir / f"{args.experiment_name}_history.csv"
 
     best_val_mae = float("inf")
-    patience = 2
+    patience = 3
     patience_counter = 0
 
     history = []
