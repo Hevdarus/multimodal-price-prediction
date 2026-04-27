@@ -13,7 +13,9 @@ class TextDataset(Dataset):
         return len(self.df)
 
     def __getitem__(self, idx):
-        text = self.df.iloc[idx]["catalog_content"]
+        row = self.df.iloc[idx]
+
+        text = str(row["catalog_content"])
 
         encoding = self.tokenizer(
             text,
@@ -23,15 +25,18 @@ class TextDataset(Dataset):
             return_tensors="pt"
         )
 
+        sample_id = row["sample_id"] if "sample_id" in self.df.columns else idx
+
         item = {
-            "input_ids": encoding["input_ids"].squeeze(),
-            "attention_mask": encoding["attention_mask"].squeeze(),
+            "sample_id": str(sample_id),
+            "input_ids": encoding["input_ids"].squeeze(0),
+            "attention_mask": encoding["attention_mask"].squeeze(0),
         }
 
         if "log_price" in self.df.columns:
             item["target"] = torch.tensor(
-                self.df.iloc[idx]["log_price"],
-                dtype=torch.float
+                row["log_price"],
+                dtype=torch.float32
             )
 
         return item
