@@ -98,8 +98,8 @@ def save_checkpoint(model, output_path: str | Path):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_csv", type=str, default="data/processed/train_split.csv")
-    parser.add_argument("--val_csv", type=str, default="data/processed/val_split.csv")
+    parser.add_argument("--train_csv", type=str, default="data/processed/train_split_with_images.csv")
+    parser.add_argument("--val_csv", type=str, default="data/processed/val_split_with_images.csv")
     parser.add_argument("--image_dir", type=str, default="data/images")
     parser.add_argument("--experiment_name", type=str, default="image_resnet18_baseline")
     parser.add_argument("--batch_size", type=int, default=64)
@@ -150,12 +150,15 @@ if __name__ == "__main__":
     model = ImageRegressionModel(pretrained=True).to(device)
     optimizer = AdamW(model.parameters(), lr=args.lr)
 
-    output_dir = Path("outputs/models")
+    output_dir = Path("outputs/models/image")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     best_model_path = output_dir / f"{args.experiment_name}.pt"
     val_pred_path = output_dir / f"{args.experiment_name}_val_predictions.csv"
     history_path = output_dir / f"{args.experiment_name}_history.csv"
+
+    patience = 3
+    patience_counter = 0
 
     best_val_loss = float("inf")
     history = []
@@ -188,9 +191,17 @@ if __name__ == "__main__":
 
         if current_val_loss < best_val_loss:
             best_val_loss = current_val_loss
+            patience_counter = 0
             save_checkpoint(model, best_model_path)
             val_predictions.to_csv(val_pred_path, index=False)
             print("Best model updated and saved.")
+        else:
+            patience_counter += 1
+            print(f"No improvement. Patience: {patience_counter}/{patience}")
+
+        if patience_counter >= patience:
+            print("Early stopping triggered.")
+            break
 
     pd.DataFrame(history).to_csv(history_path, index=False)
 

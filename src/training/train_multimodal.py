@@ -115,6 +115,7 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--max_length", type=int, default=64)
+    parser.add_argument("--image_encoder",type=str,default="resnet18",choices=["resnet18", "efficientnet_b0"])
     return parser.parse_args()
 
 
@@ -163,6 +164,7 @@ if __name__ == "__main__":
 
     model = MultimodalRegressionModel(
         text_model_name=args.text_model_name,
+        image_encoder_name=args.image_encoder,
         image_pretrained=True,
         text_dropout=0.1,
         fusion_hidden_dim=256,
